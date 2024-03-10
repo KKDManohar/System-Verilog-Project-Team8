@@ -25,14 +25,14 @@ logic DEN;
 logic [19:0] Address;
 wire [7:0]  Data;
 
-logic CS1,CS2,CS3,CS4,CS;
-logic load,OE,Wrenb;
+logic CS1,CS2,CS3,CS4;
 
 
 Intel8088 P(CLK, MNMX, TEST, RESET, READY, NMI, INTR, HOLD, AD, A, HLDA, IOM, WR, RD, SSO, INTA, ALE, DTR, DEN);
-FSM Y(ALE,CLK,RESET,RD,WR,CS,load,OE,Wrenb);
-GenericIOM #(.IOM(0)) Z(CLK,CS1,CS2,CS3,CS4,load,OE,Wrenb,A,AD);
-GenericIOM #(.IOM(1)) Z1(CLK,CS1,CS2,CS3,CS4,load,OE,Wrenb,A,AD);
+GenericIOM #(.IOM(0)) Z(CLK,.CS(CS1),ALE,RESET,RD,WR,Address,AD);
+GenericIOM #(.IOM(0)) Z1(CLK,.CS(CS2),ALE,RESET,RD,WR,Address,AD);
+GenericIOM #(.IOM(1)) Z2(CLK,.CS(CS3),ALE,RESET,RD,WR,Address,AD);
+GenericIOM #(.IOM(1)) Z3(CLK,.CS(CS4),ALE,RESET,RD,WR,Address,AD);
 
 
 // 8282 Latch to latch bus address
@@ -45,19 +45,22 @@ end
 //2x4 Decoder
 always_comb
 	begin
-		if(ALE && !IOM && !Address[19])
+		{CS1,CS2,CS3,CS4} = 4'b0000;
+		if(!IOM && !Address[19])
 			{CS1,CS2,CS3,CS4} = 4'b1000;
-		else if(ALE && !IOM && Address[19])
+		else if(!IOM && Address[19])
 			{CS1,CS2,CS3,CS4} = 4'b0100;
-		else if(ALE && IOM && Address[15:4] == 12'hff0)
+		else if(IOM && Address[15:4] == 12'hff0)
 			{CS1,CS2,CS3,CS4} = 4'b0010;
-		else if(ALE && IOM && Address[15:9] == 7'h0e)
+		else if(IOM && Address[15:9] == 7'h0e)
 			{CS1,CS2,CS3,CS4} = 4'b0001;
 		else
 			{CS1,CS2,CS3,CS4} = 4'b0000;
 	end
 	
-assign CS = CS1 || CS2 || CS3 || CS4;
+//assign CS = CS1 || CS2 || CS3 || CS4;
+
+
 
 // 8286 transceiver
 assign Data =  (DTR & ~DEN) ? AD   : 'z;//write
