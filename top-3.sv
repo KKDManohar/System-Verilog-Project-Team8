@@ -27,12 +27,11 @@ wire [7:0]  Data;
 
 logic CS1,CS2,CS3,CS4;
 
-
 Intel8088 P(CLK, MNMX, TEST, RESET, READY, NMI, INTR, HOLD, AD, A, HLDA, IOM, WR, RD, SSO, INTA, ALE, DTR, DEN);
-GenericIOM #(.IOM(0)) Z(CLK,.CS(CS1),ALE,RESET,RD,WR,Address,AD);
-GenericIOM #(.IOM(0)) Z1(CLK,.CS(CS2),ALE,RESET,RD,WR,Address,AD);
-GenericIOM #(.IOM(1)) Z2(CLK,.CS(CS3),ALE,RESET,RD,WR,Address,AD);
-GenericIOM #(.IOM(1)) Z3(CLK,.CS(CS4),ALE,RESET,RD,WR,Address,AD);
+GenericIOM #(.IOM(0)) Z(CLK,CS1,ALE,RESET,RD,WR,Address,Data);
+GenericIOM #(.IOM(0)) Z1(CLK,CS2,ALE,RESET,RD,WR,Address,Data);
+GenericIOM #(.IOM(1)) Z2(CLK,CS3,ALE,RESET,RD,WR,Address,Data);
+GenericIOM #(.IOM(1)) Z3(CLK,CS4,ALE,RESET,RD,WR,Address,Data);
 
 
 // 8282 Latch to latch bus address
@@ -43,6 +42,7 @@ if (ALE)
 end
 
 //2x4 Decoder
+
 always_comb
 	begin
 		{CS1,CS2,CS3,CS4} = 4'b0000;
@@ -57,8 +57,6 @@ always_comb
 		else
 			{CS1,CS2,CS3,CS4} = 4'b0000;
 	end
-	
-//assign CS = CS1 || CS2 || CS3 || CS4;
 
 
 
