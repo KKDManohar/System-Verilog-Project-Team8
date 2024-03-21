@@ -1,26 +1,28 @@
-//module iom(CLK,RESET,ALE,CS,RD,WR,Address,Data);
-module iom(Intel8088Pins.IOM_interface pins,input CS,input [19:0]Address,[7:0]Data);
-//input CS;
-//input logic [19:0] Address;
-//inout logic [7:0] Data;
+module iom(Intel8088Pins.IOM_interface pins,input logic CS,input logic [19:0] Address,inout logic [7:0] Data);
 
+parameter MSB = 20'hFFFFF;
+parameter LSB = 20'h00000;
+parameter file = "MEM1trace.txt";
+
+
+logic [7:0] DATA_REG;
 logic [19:0] ADD_REG;
-
 logic LOAD,OE,WRENB;
+logic [7:0] Mem [MSB:LSB];
 
-parameter ADD_LEN = 20;
-parameter IOM = 0;
 
-logic [7:0] IOM_REG [2**ADD_LEN-1:0];
+typedef enum logic [4:0] {
+	
+		IDLE =   5'b00001,
+		ADD_LOAD =5'b00010,
+		READ =   5'b00100,
+		WRITE =  5'b01000,
+		DELAY =  5'b10000
+	
+	} State;
+	
+	State CURRENT_STATE , NEXT_STATE;
 
-parameter 
-	IDLE = 5'b00001,
-	ADD_LOAD = 5'b00010,
-	READ = 5'b00100,
-	WRITE = 5'b01000,
-	DELAY = 5'b10000;
-
-logic [4:0] CURRENT_STATE,NEXT_STATE;
 
 always_ff @ (posedge pins.CLK)
 	begin
@@ -97,18 +99,19 @@ always_latch
 	if(LOAD)
 		ADD_REG <= {Address};
 	end
+	
 
 always @ (posedge pins.CLK)
 	begin
 	if(WRENB)
-		IOM_REG[ADD_REG] <= Data;
+		Mem[ADD_REG] <= Data;
 	end
 
-assign Data = OE ? IOM_REG[ADD_REG] : 'z;
+assign Data = OE ? Mem[ADD_REG] : 'z;
 
 initial 
 	begin
-		$readmemh("Memory.txt",IOM_REG);
+	$readmemh(file, Mem , MSB , LSB);
 	end
 
 

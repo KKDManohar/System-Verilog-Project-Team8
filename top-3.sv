@@ -4,7 +4,6 @@ bit CLK = '0;
 bit RESET ='0;
 initial
 	begin
-
 		Bus.MNMX = '1;
 		Bus.TEST = '1;
 		Bus. READY = '1;
@@ -12,19 +11,6 @@ initial
  		Bus.INTR = '0;
  		Bus.HOLD = '0;
 	end
-
-/*wire logic [7:0] AD;
-logic [19:8] A;
-logic HLDA;
-logic IOM;
-logic WR;
-logic RD;
-logic SSO;
-logic INTA;
-logic ALE;
-logic DTR;
-logic DEN;
-*/
 
 logic CS1,CS2,CS3,CS4;
 
@@ -35,25 +21,22 @@ wire logic [7:0]  Data;
 //Intel8088 P(CLK, MNMX, TEST, RESET, READY, NMI, INTR, HOLD, AD, A, HLDA, IOM, WR, RD, SSO, INTA, ALE, DTR, DEN);
 Intel8088Pins Bus(CLK,RESET);
 Intel8088 p(Bus.Processor);
-//iom #(.IOM(0)) m1 (CLK,RESET,ALE,CS1,RD,WR,Address,Data);
-iom #(.IOM(0)) m1 (Bus.IOM_interface,CS1,Address,Data);
-iom #(.IOM(0)) m2 (Bus.IOM_interface,CS2,Address,Data);
-iom #(.IOM(1)) m3 (Bus.IOM_interface,CS3,Address,Data);
-iom #(.IOM(1)) m4 (Bus.IOM_interface,CS4,Address,Data);
-//iom #(.IOM(0)) m2 (CLK,RESET,ALE,CS2,RD,WR,Address,Data);
-//iom #(.IOM(1)) m3 (CLK,RESET,ALE,CS3,RD,WR,Address,Data);
-//iom #(.IOM(1)) m4 (CLK,RESET,ALE,CS4,RD,WR,Address,Data);
 
+iom #(.MSB(20'h80000),.LSB(20'hFFFFF),.file("MEM1trace.txt")) m1 (Bus.IOM_interface,CS1,Address,Data);
+iom #(.MSB(20'h00000),.LSB(20'h7FFFF),.file("MEM2trace.txt")) m2 (Bus.IOM_interface,CS2,Address,Data);
+iom #(.MSB(16'h1C00),.LSB(16'h1DFF),.file("IOPORT2.txt")) m3 (Bus.IOM_interface,CS3,Address,Data);
+iom #(.MSB(16'hFF00),.LSB(16'hFF0F),.file("IOPORT1.txt")) m4 (Bus.IOM_interface,CS4,Address,Data);
+
+//Chip Select Logic
 always_comb
 	begin
 		{CS1,CS2,CS3,CS4} = 4'b0000;
-		if(~Bus.IOM && ~Address[19]) 
+		if(~Bus.IOM && Address[19]) 
 			CS1 = 1'b1;
-		else if (~Bus.IOM && Address[19]) 
+		else if (~Bus.IOM && ~Address[19]) 
 			CS2 = 1'b1;
 		else if(Bus.IOM && Address[15:9] == 7'hE)
 			CS3 = 1'b1;
-
 		else if(Bus.IOM && Address[15:4] == 12'hFF0)
 			CS4 = 1'b1;
 
